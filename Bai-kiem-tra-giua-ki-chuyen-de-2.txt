@@ -1,0 +1,257 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class Task {
+  String name;
+  String time;
+  String location;
+  bool remind;
+  String remindType;
+
+  Task({
+    required this.name,
+    required this.time,
+    required this.location,
+    required this.remind,
+    required this.remindType,
+  });
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: TaskListPage(),
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// DANH SÁCH (GIỐNG MÀN HÌNH TRÁI)
+//////////////////////////////////////////////////
+
+class TaskListPage extends StatefulWidget {
+  @override
+  _TaskListPageState createState() => _TaskListPageState();
+}
+
+class _TaskListPageState extends State<TaskListPage> {
+  List<Task> tasks = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 60, 16, 16),
+            child: ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                final t = tasks[index];
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    t.name,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Nút +
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: InkWell(
+              onTap: () async {
+                final newTask = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddTaskPage()),
+                );
+
+                if (newTask != null) {
+                  setState(() {
+                    tasks.add(newTask);
+                  });
+                }
+              },
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.add),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// THÊM CÔNG VIỆC (GIỐNG MÀN HÌNH PHẢI)
+//////////////////////////////////////////////////
+
+class AddTaskPage extends StatefulWidget {
+  @override
+  _AddTaskPageState createState() => _AddTaskPageState();
+}
+
+class _AddTaskPageState extends State<AddTaskPage> {
+  TextEditingController name = TextEditingController();
+  TextEditingController time = TextEditingController();
+  TextEditingController location = TextEditingController();
+
+  bool remind = true;
+  String remindType = "Chuông";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(16, 60, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            buildField("Tên công việc", name),
+            SizedBox(height: 15),
+
+            Row(
+  children: [
+    SizedBox(
+      width: 130,
+      child: Text("Thời gian"),
+    ),
+    Expanded(
+      child: TextField(
+        controller: time,
+        readOnly: true,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        ),
+      ),
+    ),
+    SizedBox(width: 10),
+    InkWell(
+      onTap: () async {
+        DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+
+        if (pickedDate != null) {
+          setState(() {
+            time.text =
+                "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+          });
+        }
+      },
+      child: Icon(Icons.calendar_today),
+    ),
+  ],
+),
+
+            SizedBox(height: 15),
+            buildField("Địa điểm", location),
+
+            SizedBox(height: 15),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Nhắc việc trước 1 ngày"),
+                Switch(
+                  value: remind,
+                  onChanged: (v) {
+                    setState(() {
+                      remind = v;
+                    });
+                  },
+                )
+              ],
+            ),
+
+            DropdownButton<String>(
+              value: remindType,
+              isExpanded: true,
+              items: ["Chuông", "Email", "Thông báo"]
+                  .map((e) => DropdownMenuItem(
+                        child: Text("Nhắc bằng $e"),
+                        value: e,
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                setState(() {
+                  remindType = v!;
+                });
+              },
+            ),
+
+            SizedBox(height: 20),
+
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  side: BorderSide(),
+                ),
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    Task(
+                      name: name.text,
+                      time: time.text,
+                      location: location.text,
+                      remind: remind,
+                      remindType: remindType,
+                    ),
+                  );
+                },
+                child: Text("Ghi lại công việc"),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildField(String label, TextEditingController controller) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      SizedBox(
+        width: 130, // 👈 chỉnh cố định để thẳng hàng
+        child: Text(label),
+      ),
+      Expanded(
+        child: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+}
